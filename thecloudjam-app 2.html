@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TheCloudJam — 1v1 Jam</title>
+<meta name="description" content="TheCloudJam 1v1 — get paired with a random musician and jam live in your browser.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f5f7f9;
+    --surface:#ffffff;
+    --ink:#2c2e31;
+    --ink-dim:#666a6f;
+    --blue:#2ea3d6;
+    --blue-light:#5cc2ec;
+    --blue-deep:#1c7ba3;
+    --charcoal:#333333;
+    --charcoal-soft:#3d3f42;
+    --stage:#26282b;
+    --line: rgba(44,46,49,0.12);
+    --line-dark: rgba(255,255,255,0.12);
+    --radius:14px;
+    --logo-font:'Fredoka', sans-serif;
+    --body:'Space Grotesk', sans-serif;
+    --mono:'Space Mono', monospace;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+  }
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--body);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit;}
+  button{ font-family:var(--body); cursor:pointer; }
+  :focus-visible{ outline:2px solid var(--blue); outline-offset:3px; border-radius:4px; }
+  .wrap{ max-width:1240px; margin:0 auto; padding:0 20px; }
+
+  /* ---------- Header ---------- */
+  header.site{
+    position:sticky; top:0; z-index:50;
+    backdrop-filter:blur(10px);
+    background:rgba(245,247,249,0.82);
+    border-bottom:1px solid var(--line);
+  }
+  nav{ display:flex; align-items:center; justify-content:space-between; padding:14px 0; gap:16px; }
+  .logo{
+    font-family:var(--logo-font); font-weight:600; font-size:1.25rem;
+    text-decoration:none; display:flex; align-items:center; gap:9px; color:var(--ink-dim);
+    flex-shrink:0;
+  }
+  .logo strong{ color:var(--blue); font-weight:700; }
+  .logo b{ color:var(--charcoal); font-weight:700; }
+  .logo sup{ font-family:var(--body); font-weight:600; font-size:0.55rem; color:var(--ink-dim); }
+  .nav-right{ display:flex; align-items:center; gap:10px; }
+  .pill-btn{
+    border:1px solid var(--line); background:var(--surface); color:var(--ink);
+    font-weight:600; font-size:0.88rem; padding:9px 16px; border-radius:999px;
+    transition:border-color .2s, color .2s;
+  }
+  .pill-btn:hover{ border-color:var(--blue); color:var(--blue-deep); }
+  .pill-btn.primary{ background:var(--blue); border-color:var(--blue); color:#fff; }
+  .pill-btn.primary:hover{ background:var(--blue-deep); border-color:var(--blue-deep); }
+
+  /* ---------- Landing / home ---------- */
+  #homeView{ text-align:center; padding:72px 0 60px; }
+  .home-logo{ display:flex; justify-content:center; margin-bottom:8px; }
+  #homeView h1{
+    font-family:var(--logo-font); font-weight:600; font-size:clamp(2rem,4.5vw,3rem);
+    margin:10px 0 6px; color:var(--ink-dim); letter-spacing:0;
+  }
+  #homeView h1 strong{ color:var(--blue); font-weight:700; }
+  #homeView h1 b{ color:var(--charcoal); font-weight:700; }
+  #homeView h1 sup{ font-family:var(--body); font-size:0.8rem; color:var(--ink-dim); }
+  #homeView p.tag{ color:var(--ink-dim); font-size:1.08rem; max-width:52ch; margin:0 auto 34px; }
+  .start-btn{
+    font-family:var(--logo-font); font-weight:600; font-size:1.35rem;
+    background:var(--blue); color:#fff; border:none; border-radius:999px;
+    padding:18px 54px;
+    box-shadow:0 14px 34px rgba(46,163,214,0.35);
+    transition:transform .15s, background .2s;
+  }
+  .start-btn:hover{ transform:translateY(-2px); background:var(--blue-deep); }
+  .home-explain{
+    margin:56px auto 0; max-width:880px;
+    background:var(--surface); border:1px solid var(--line); border-radius:20px;
+    padding:34px 30px;
+    display:grid; grid-template-columns:repeat(3,1fr); gap:24px;
+    text-align:left;
+  }
+  .home-explain h3{ font-size:1rem; margin:0 0 6px; color:var(--charcoal); }
+  .home-explain p{ font-size:0.9rem; color:var(--ink-dim); margin:0; }
+  .he-ico{
+    width:38px; height:38px; border-radius:10px; background:rgba(46,163,214,0.12);
+    color:var(--blue-deep); display:flex; align-items:center; justify-content:center;
+    font-size:1.1rem; margin-bottom:12px;
+  }
+  @media (max-width:720px){ .home-explain{ grid-template-columns:1fr; } }
+
+  /* ---------- Jam view ---------- */
+  #jamView{ display:none; padding:22px 0 50px; }
+  .jam-grid{
+    display:grid;
+    grid-template-columns:1fr 360px;
+    gap:18px;
+    align-items:start;
+  }
+  @media (max-width:980px){ .jam-grid{ grid-template-columns:1fr; } }
+
+  .stage-col{ display:flex; flex-direction:column; gap:18px; }
+
+  .video-panel{
+    background:var(--stage);
+    border-radius:18px;
+    overflow:hidden;
+    position:relative;
+    border:1px solid rgba(0,0,0,0.2);
+  }
+  .video-panel .label{
+    position:absolute; left:14px; bottom:12px;
+    font-family:var(--mono); font-size:0.72rem; letter-spacing:0.1em; text-transform:uppercase;
+    color:rgba(255,255,255,0.85);
+    background:rgba(0,0,0,0.45); padding:4px 10px; border-radius:999px;
+    z-index:3;
+  }
+  .video-panel .report-btn{
+    position:absolute; right:12px; top:12px; z-index:3;
+    background:rgba(0,0,0,0.45); color:#fff; border:1px solid rgba(255,255,255,0.25);
+    border-radius:999px; font-size:0.78rem; padding:6px 12px;
+  }
+  .video-panel .report-btn:hover{ background:rgba(200,40,40,0.75); }
+  .video-panel canvas, .video-panel video{
+    width:100%; display:block; aspect-ratio:16/9; object-fit:cover; background:var(--stage);
+  }
+  .panel-status{
+    position:absolute; inset:0; z-index:2;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
+    color:rgba(255,255,255,0.75);
+    font-family:var(--mono); font-size:0.85rem; text-align:center; padding:20px;
+    background:radial-gradient(ellipse 70% 60% at 50% 40%, rgba(46,163,214,0.12), transparent 70%);
+  }
+  .panel-status.hidden{ display:none; }
+
+  .stage-controls{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  }
+  .ctrl-btn{
+    border:1px solid var(--line); background:var(--surface); color:var(--ink);
+    font-weight:600; font-size:0.88rem; padding:10px 16px; border-radius:999px;
+    display:inline-flex; align-items:center; gap:7px;
+    transition:border-color .2s, color .2s, background .2s;
+  }
+  .ctrl-btn:hover{ border-color:var(--blue); color:var(--blue-deep); }
+  .ctrl-btn[aria-pressed="true"]{ background:var(--charcoal); border-color:var(--charcoal); color:#fff; }
+  .shuffle-btn{
+    margin-left:auto;
+    font-family:var(--logo-font); font-weight:600; font-size:1.02rem;
+    background:var(--blue); color:#fff; border:none; border-radius:999px; padding:12px 28px;
+    transition:background .2s, transform .15s;
+  }
+  .shuffle-btn:hover{ background:var(--blue-deep); transform:translateY(-1px); }
+  select.genre{
+    border:1px solid var(--line); background:var(--surface); color:var(--ink);
+    font-family:var(--body); font-weight:600; font-size:0.88rem;
+    padding:10px 14px; border-radius:999px;
+  }
+
+  /* effects menus */
+  .fx-row{ display:flex; gap:10px; flex-wrap:wrap; }
+  .fx-group{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    padding:14px 16px; flex:1; min-width:250px;
+  }
+  .fx-group h4{
+    margin:0 0 10px; font-size:0.78rem; font-family:var(--mono);
+    letter-spacing:0.12em; text-transform:uppercase; color:var(--ink-dim);
+  }
+  .fx-chips{ display:flex; gap:8px; flex-wrap:wrap; }
+  .chip{
+    border:1px solid var(--line); background:var(--bg); color:var(--ink);
+    font-size:0.82rem; font-weight:500; padding:7px 13px; border-radius:999px;
+    transition:all .15s;
+  }
+  .chip:hover{ border-color:var(--blue); color:var(--blue-deep); }
+  .chip[aria-pressed="true"]{ background:var(--blue); border-color:var(--blue); color:#fff; }
+
+  /* ---------- Side column ---------- */
+  .side-col{ display:flex; flex-direction:column; gap:18px; }
+  .side-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    display:flex; flex-direction:column; overflow:hidden;
+  }
+  .side-card h4{
+    margin:0; padding:13px 16px;
+    font-size:0.78rem; font-family:var(--mono); letter-spacing:0.12em; text-transform:uppercase;
+    color:var(--ink-dim); border-bottom:1px solid var(--line);
+    display:flex; justify-content:space-between; align-items:center;
+  }
+
+  /* chat */
+  .chat-log{
+    height:230px; overflow-y:auto; padding:14px 16px;
+    display:flex; flex-direction:column; gap:8px;
+    font-size:0.9rem;
+  }
+  .msg{ max-width:82%; padding:8px 13px; border-radius:14px; line-height:1.4; }
+  .msg.you{ align-self:flex-end; background:var(--blue); color:#fff; border-bottom-right-radius:4px; }
+  .msg.them{ align-self:flex-start; background:var(--bg); border:1px solid var(--line); border-bottom-left-radius:4px; }
+  .msg .who{ display:block; font-family:var(--mono); font-size:0.62rem; opacity:0.65; margin-bottom:2px; letter-spacing:0.08em; text-transform:uppercase; }
+  .chat-input-row{ display:flex; gap:8px; padding:12px; border-top:1px solid var(--line); }
+  .chat-input-row input{
+    flex:1; border:1px solid var(--line); background:var(--bg); color:var(--ink);
+    font-family:var(--body); font-size:0.9rem; padding:10px 14px; border-radius:999px;
+  }
+  .chat-input-row button{
+    background:var(--blue); border:none; color:#fff; font-weight:600;
+    padding:10px 18px; border-radius:999px;
+  }
+  .chat-input-row button:hover{ background:var(--blue-deep); }
+
+  /* partner meta */
+  .partner-meta{
+    padding:14px 16px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  }
+  .partner-meta .pm-name{ font-weight:700; color:var(--charcoal); font-size:1.02rem; }
+  .partner-meta .pm-likes{ font-family:var(--mono); font-size:0.78rem; color:var(--ink-dim); }
+  .mini-btn{
+    border:1px solid var(--line); background:var(--bg); color:var(--ink);
+    font-size:0.8rem; font-weight:600; padding:6px 13px; border-radius:999px;
+  }
+  .mini-btn:hover{ border-color:var(--blue); color:var(--blue-deep); }
+
+  /* playlist */
+  .dropzone{
+    margin:12px; padding:20px 14px;
+    border:2px dashed rgba(46,163,214,0.45); border-radius:12px;
+    text-align:center; font-size:0.85rem; color:var(--ink-dim);
+    transition:background .15s, border-color .15s;
+  }
+  .dropzone.dragover{ background:rgba(46,163,214,0.08); border-color:var(--blue); }
+  .dropzone input{ display:none; }
+  .dropzone label{ color:var(--blue-deep); font-weight:600; cursor:pointer; text-decoration:underline; }
+  .track-list{ list-style:none; margin:0; padding:0 12px 8px; max-height:170px; overflow-y:auto; }
+  .track-list li{
+    display:flex; align-items:center; gap:8px;
+    padding:8px 6px; border-bottom:1px solid var(--line); font-size:0.84rem;
+  }
+  .track-list li:last-child{ border-bottom:none; }
+  .track-list .t-name{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .track-list li.playing .t-name{ color:var(--blue-deep); font-weight:600; }
+  .t-btn{ background:none; border:none; font-size:0.9rem; color:var(--ink-dim); padding:2px 5px; }
+  .t-btn:hover{ color:var(--blue-deep); }
+  .player-row{
+    display:flex; align-items:center; gap:8px; padding:10px 14px 14px;
+  }
+  .p-btn{
+    width:36px; height:36px; border-radius:50%; border:1px solid var(--line);
+    background:var(--bg); color:var(--ink); font-size:0.8rem;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .p-btn.play{ background:var(--blue); border-color:var(--blue); color:#fff; width:42px; height:42px; }
+  .p-btn:hover{ border-color:var(--blue); }
+  .p-btn.play:hover{ background:var(--blue-deep); }
+  input[type="range"].vol{ flex:1; accent-color:var(--blue); }
+
+  /* footer */
+  footer{ border-top:1px solid var(--line); padding:26px 0; margin-top:40px; }
+  .foot-links{ display:flex; gap:22px; justify-content:center; font-size:0.85rem; color:var(--ink-dim); }
+  .foot-links a{ text-decoration:none; }
+  .foot-links a:hover{ color:var(--blue-deep); }
+  .foot-note{ text-align:center; font-family:var(--mono); font-size:0.72rem; color:var(--ink-dim); margin-top:12px; }
+
+  .demo-banner{
+    background:rgba(46,163,214,0.1); border:1px solid rgba(46,163,214,0.3);
+    color:var(--blue-deep); border-radius:10px; font-size:0.82rem;
+    padding:10px 14px; margin-bottom:16px;
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <nav>
+      <a href="#" class="logo" id="logoHome">
+        <svg width="40" height="26" viewBox="-20 0 100 64" aria-hidden="true">
+          <path d="M14,42 C8,42 4,37 4,31 C4,26 7,22 12,21 C13,14 19,9 26,9 C32,9 37,13 39,19 C40,18 42,18 43,18 C50,18 55,23 55,30 C55,37 50,42 43,42 Z" fill="#2ea3d6"/>
+          <circle cx="29" cy="27" r="10" fill="#fff"/>
+          <circle cx="29" cy="27" r="6" fill="#2ea3d6"/>
+          <circle cx="29" cy="27" r="2.2" fill="#fff"/>
+          <path d="M2,21 q-3,6 0,12" stroke="#2ea3d6" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+          <path d="M-4,18 q-5,9 0,18" stroke="#2ea3d6" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+          <path d="M57,21 q3,6 0,12" stroke="#2ea3d6" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+          <path d="M63,18 q5,9 0,18" stroke="#2ea3d6" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+        </svg>
+        <span><b>The</b><strong>Cloud</strong><b>Jam</b></span><sup>™</sup>
+      </a>
+      <div class="nav-right">
+        <button class="pill-btn" id="updatesBtn" title="Updates">🔔 Updates</button>
+        <button class="pill-btn primary">Sign up / In</button>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<!-- ============ HOME ============ -->
+<main>
+<section id="homeView" class="wrap">
+  <div class="home-logo">
+    <svg width="150" height="96" viewBox="-20 0 100 64" aria-hidden="true">
+      <path d="M14,42 C8,42 4,37 4,31 C4,26 7,22 12,21 C13,14 19,9 26,9 C32,9 37,13 39,19 C40,18 42,18 43,18 C50,18 55,23 55,30 C55,37 50,42 43,42 Z" fill="#2ea3d6"/>
+      <circle cx="29" cy="27" r="10" fill="#fff"/>
+      <circle cx="29" cy="27" r="6" fill="#2ea3d6"/>
+      <circle cx="29" cy="27" r="2.2" fill="#fff"/>
+      <path d="M2,21 q-3,6 0,12" stroke="#2ea3d6" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      <path d="M-4,18 q-5,9 0,18" stroke="#2ea3d6" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      <path d="M-10,15 q-7,12 0,24" stroke="#2ea3d6" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      <path d="M57,21 q3,6 0,12" stroke="#2ea3d6" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      <path d="M63,18 q5,9 0,18" stroke="#2ea3d6" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      <path d="M69,15 q7,12 0,24" stroke="#2ea3d6" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <h1><b>The</b><strong>Cloud</strong><b>Jam</b><sup>™</sup></h1>
+  <p class="tag">Live music creation, collaboration and promotion — one click pairs you with another musician based on genre and musical interests. Play to each other with just a webcam and mic, build your skills, and grow your music network.</p>
+  <button class="start-btn" id="startBtn">Start!</button>
+
+  <div class="home-explain">
+    <div>
+      <div class="he-ico">🎛</div>
+      <h3>Matched by music</h3>
+      <p>Pick a genre — Battlin, hip-hop, instrumental, singing, or Any — and our matching pairs you with a fitting artist.</p>
+    </div>
+    <div>
+      <div class="he-ico">🔀</div>
+      <h3>Perform 1-on-1, live</h3>
+      <p>Musicians build skills and their network; music lovers get a truly live, intimate performance. Shuffle any time.</p>
+    </div>
+    <div>
+      <div class="he-ico">🎚</div>
+      <h3>Create with real tools</h3>
+      <p>Digital instruments, audio effects, synth beats and visualizers, plus your own tracks — right in the browser.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 1v1 JAM VIEW ============ -->
+<section id="jamView" class="wrap">
+  <div class="demo-banner">
+    <strong>Demo mode:</strong> matching runs against a simulated partner until the signaling server is connected. Your camera, mic, effects and playlist are fully live.
+  </div>
+  <div class="jam-grid">
+
+    <!-- LEFT: stages -->
+    <div class="stage-col">
+
+      <!-- THEM -->
+      <div class="video-panel" id="themPanel">
+        <button class="report-btn" id="reportBtn">⚑ Report</button>
+        <canvas id="themCanvas" width="1280" height="720"></canvas>
+        <div class="panel-status" id="themStatus">
+          <div>No partner yet</div>
+          <div style="font-size:0.72rem; opacity:0.7;">Choose a genre and press Start / Shuffle</div>
+        </div>
+        <span class="label">Them</span>
+      </div>
+
+      <!-- partner meta -->
+      <div class="side-card" style="border-radius:var(--radius);">
+        <div class="partner-meta">
+          <span class="pm-name" id="pmName">—</span>
+          <span class="pm-likes" id="pmLikes">Likes: —</span>
+          <button class="mini-btn" id="likeBtn">👍 Like</button>
+          <button class="mini-btn" id="friendBtn">+ Friend</button>
+          <button class="mini-btn" id="msgBtn">Message</button>
+          <span style="margin-left:auto;"></span>
+          <select class="genre" id="genreSel" aria-label="Genre">
+            <option value="any">Genre: Any</option>
+            <option value="battlin">Battlin</option>
+            <option value="hiphop">Hip-hop</option>
+            <option value="instrumental">Instrumental</option>
+            <option value="singing">Singing</option>
+          </select>
+          <button class="shuffle-btn" id="shuffleBtn">Start / Shuffle ▶</button>
+        </div>
+      </div>
+
+      <!-- YOU -->
+      <div class="video-panel">
+        <canvas id="youCanvas" width="1280" height="720"></canvas>
+        <div class="panel-status" id="youStatus">
+          <div>Camera is off</div>
+          <div style="font-size:0.72rem; opacity:0.7;">Allow camera & mic access to go live</div>
+        </div>
+        <span class="label">You</span>
+      </div>
+
+      <div class="stage-controls">
+        <button class="ctrl-btn" id="camBtn" aria-pressed="false">📷 Camera: Off</button>
+        <button class="ctrl-btn" id="micBtn" aria-pressed="false">🎙 Mic: Muted</button>
+      </div>
+
+      <!-- FX menus -->
+      <div class="fx-row">
+        <div class="fx-group">
+          <h4>Menu 1 · Video</h4>
+          <div class="fx-chips" id="videoFx">
+            <button class="chip" data-fx="default" aria-pressed="true">Default</button>
+            <button class="chip" data-fx="bw" aria-pressed="false">Black & white</button>
+            <button class="chip" data-fx="oldmovie" aria-pressed="false">Old movie</button>
+            <button class="chip" data-fx="cartoon" aria-pressed="false">Posterize</button>
+            <button class="chip" data-fx="visualizer" aria-pressed="false">Visualizer</button>
+          </div>
+        </div>
+        <div class="fx-group">
+          <h4>Menu 2 · Audio</h4>
+          <div class="fx-chips" id="audioFx">
+            <button class="chip" data-afx="default" aria-pressed="true">Default</button>
+            <button class="chip" data-afx="reverb" aria-pressed="false">Reverb</button>
+            <button class="chip" data-afx="lowpass" aria-pressed="false">Low-pass</button>
+            <button class="chip" data-afx="crush" aria-pressed="false">Drive</button>
+          </div>
+        </div>
+        <div class="fx-group">
+          <h4>Menu 3 · MIDI beats</h4>
+          <div class="fx-chips" id="midiFx">
+            <button class="chip" data-beat="off" aria-pressed="true">Off</button>
+            <button class="chip" data-beat="boom" aria-pressed="false">Boom-bap 90</button>
+            <button class="chip" data-beat="four" aria-pressed="false">Four-floor 120</button>
+            <button class="chip" data-beat="trap" aria-pressed="false">Half-time 140</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: chat + playlist -->
+    <div class="side-col">
+      <div class="side-card">
+        <h4>Conversation with artist</h4>
+        <div class="chat-log" id="chatLog"></div>
+        <div class="chat-input-row">
+          <input type="text" id="chatInput" placeholder="Say something…" aria-label="Chat message">
+          <button id="chatSend">Send</button>
+        </div>
+      </div>
+
+      <div class="side-card">
+        <h4>Playlist <span style="font-size:0.62rem; letter-spacing:0.05em;">local only — never uploaded</span></h4>
+        <div class="dropzone" id="dropzone">
+          Drag & drop audio files here<br>or <label for="fileInput">browse files</label>
+          <input type="file" id="fileInput" accept="audio/*" multiple>
+        </div>
+        <ul class="track-list" id="trackList"></ul>
+        <div class="player-row">
+          <button class="p-btn" id="prevBtn" aria-label="Previous track">⏮</button>
+          <button class="p-btn play" id="playBtn" aria-label="Play or pause">▶</button>
+          <button class="p-btn" id="nextBtn" aria-label="Next track">⏭</button>
+          <input type="range" class="vol" id="volSlider" min="0" max="1" step="0.01" value="0.8" aria-label="Volume">
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-links">
+      <a href="#">Terms and Conditions</a>
+      <a href="#">Privacy Policy</a>
+      <a href="#">About Us</a>
+    </div>
+    <p class="foot-note">© Cloud Music Communication Limited · TheCloudJam™</p>
+  </div>
+</footer>
+
+<script>
+/* =====================================================================
+   TheCloudJam 1v1 — front-end prototype
+   Live: getUserMedia video+audio, canvas video FX, Web Audio FX,
+         audio visualizer, MIDI-style beat sequencer, local playlist, chat UI.
+   Stubbed: partner matching. See SIGNALING section at the bottom for
+         where a WebSocket signaling server + RTCPeerConnection plug in.
+   ===================================================================== */
+
+const $ = id => document.getElementById(id);
+
+/* ---------- view switching ---------- */
+$('startBtn').addEventListener('click', () => {
+  $('homeView').style.display = 'none';
+  $('jamView').style.display = 'block';
+  initMedia(); // ask for cam/mic on entering 1v1 view, per spec
+});
+$('logoHome').addEventListener('click', (e) => {
+  e.preventDefault();
+  $('jamView').style.display = 'none';
+  $('homeView').style.display = 'block';
+});
+
+/* ---------- media capture ---------- */
+let localStream = null;
+let camOn = false, micOn = false;
+const hiddenVideo = document.createElement('video');
+hiddenVideo.muted = true; hiddenVideo.playsInline = true;
+
+async function initMedia(){
+  if (localStream) return;
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({ video:true, audio:true });
+    hiddenVideo.srcObject = localStream;
+    await hiddenVideo.play();
+    camOn = true; micOn = false; // mic starts muted locally to avoid feedback
+    localStream.getAudioTracks().forEach(t => t.enabled = false);
+    updateAvButtons();
+    $('youStatus').classList.add('hidden');
+    setupAudioGraph();
+  } catch(err){
+    $('youStatus').innerHTML = '<div>Camera/mic blocked</div><div style="font-size:0.72rem;opacity:0.7;">Enable permissions in your browser settings, then reload.</div>';
+  }
+}
+
+$('camBtn').addEventListener('click', () => {
+  if (!localStream) { initMedia(); return; }
+  camOn = !camOn;
+  localStream.getVideoTracks().forEach(t => t.enabled = camOn);
+  $('youStatus').classList.toggle('hidden', camOn);
+  updateAvButtons();
+});
+$('micBtn').addEventListener('click', () => {
+  if (!localStream) { initMedia(); return; }
+  micOn = !micOn;
+  localStream.getAudioTracks().forEach(t => t.enabled = micOn);
+  updateAvButtons();
+});
+function updateAvButtons(){
+  $('camBtn').textContent = camOn ? '📷 Camera: On' : '📷 Camera: Off';
+  $('camBtn').setAttribute('aria-pressed', camOn);
+  $('micBtn').textContent = micOn ? '🎙 Mic: Live' : '🎙 Mic: Muted';
+  $('micBtn').setAttribute('aria-pressed', micOn);
+}
+
+/* ---------- video FX render loop (You canvas) ---------- */
+const youCanvas = $('youCanvas'), yc = youCanvas.getContext('2d', { willReadFrequently:true });
+let videoFx = 'default';
+
+document.querySelectorAll('#videoFx .chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('#videoFx .chip').forEach(c => c.setAttribute('aria-pressed','false'));
+    chip.setAttribute('aria-pressed','true');
+    videoFx = chip.dataset.fx;
+  });
+});
+
+function renderYou(){
+  const w = youCanvas.width, h = youCanvas.height;
+  if (videoFx === 'visualizer') {
+    drawVisualizer(yc, w, h, analyser, '#2ea3d6');
+  } else if (camOn && hiddenVideo.readyState >= 2) {
+    yc.drawImage(hiddenVideo, 0, 0, w, h);
+    if (videoFx !== 'default') applyPixelFx(yc, w, h, videoFx);
+  } else {
+    yc.fillStyle = '#26282b'; yc.fillRect(0,0,w,h);
+  }
+  requestAnimationFrame(renderYou);
+}
+
+function applyPixelFx(ctx, w, h, fx){
+  const img = ctx.getImageData(0,0,w,h), d = img.data;
+  if (fx === 'bw'){
+    for (let i=0;i<d.length;i+=4){ const g = d[i]*0.3+d[i+1]*0.59+d[i+2]*0.11; d[i]=d[i+1]=d[i+2]=g; }
+  } else if (fx === 'oldmovie'){
+    for (let i=0;i<d.length;i+=4){
+      const g = d[i]*0.3+d[i+1]*0.59+d[i+2]*0.11;
+      d[i]=Math.min(255,g+38); d[i+1]=Math.min(255,g+18); d[i+2]=g*0.75;
+      const n = (Math.random()-0.5)*26; d[i]+=n; d[i+1]+=n; d[i+2]+=n;
+    }
+  } else if (fx === 'cartoon'){
+    for (let i=0;i<d.length;i+=4){ d[i]=(d[i]>>5)<<5; d[i+1]=(d[i+1]>>5)<<5; d[i+2]=(d[i+2]>>5)<<5; }
+  }
+  ctx.putImageData(img,0,0);
+}
+
+/* ---------- Web Audio graph: mic/playlist -> FX -> analyser ---------- */
+let audioCtx, analyser, fxIn, dryGain, wetGain, convolver, biquad, shaper, playlistSource, micSource;
+
+function setupAudioGraph(){
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 1024;
+
+  fxIn = audioCtx.createGain();
+
+  // FX nodes
+  biquad = audioCtx.createBiquadFilter(); biquad.type='allpass';
+  shaper = audioCtx.createWaveShaper();
+  convolver = audioCtx.createConvolver(); convolver.buffer = impulse(2.2, 2.5);
+  dryGain = audioCtx.createGain(); dryGain.gain.value = 1;
+  wetGain = audioCtx.createGain(); wetGain.gain.value = 0;
+
+  fxIn.connect(biquad);
+  biquad.connect(shaper);
+  shaper.connect(dryGain);
+  shaper.connect(convolver);
+  convolver.connect(wetGain);
+  dryGain.connect(analyser);
+  wetGain.connect(analyser);
+  analyser.connect(audioCtx.destination);
+
+  // mic feeds analyser only (not speakers) to avoid feedback: separate tap
+  if (localStream && localStream.getAudioTracks().length){
+    micSource = audioCtx.createMediaStreamSource(localStream);
+    const micTap = audioCtx.createGain(); micTap.gain.value = 1;
+    micSource.connect(micTap); micTap.connect(analyser);
+  }
+
+  // playlist element routes through FX chain
+  playlistSource = audioCtx.createMediaElementSource(playerEl);
+  playlistSource.connect(fxIn);
+}
+
+function impulse(seconds, decay){
+  const rate = 44100, len = rate*seconds;
+  const impulseBuf = audioCtx.createBuffer(2, len, rate);
+  for (let c=0;c<2;c++){
+    const ch = impulseBuf.getChannelData(c);
+    for (let i=0;i<len;i++){ ch[i] = (Math.random()*2-1)*Math.pow(1-i/len, decay); }
+  }
+  return impulseBuf;
+}
+
+function makeDriveCurve(amount){
+  const k = amount, n = 44100, curve = new Float32Array(n);
+  for (let i=0;i<n;i++){ const x = i*2/n-1; curve[i] = (1+k)*x/(1+k*Math.abs(x)); }
+  return curve;
+}
+
+document.querySelectorAll('#audioFx .chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('#audioFx .chip').forEach(c => c.setAttribute('aria-pressed','false'));
+    chip.setAttribute('aria-pressed','true');
+    if (!audioCtx) setupAudioGraph();
+    const fx = chip.dataset.afx;
+    biquad.type='allpass'; shaper.curve=null; wetGain.gain.value=0; dryGain.gain.value=1;
+    if (fx==='reverb'){ wetGain.gain.value=0.55; dryGain.gain.value=0.7; }
+    if (fx==='lowpass'){ biquad.type='lowpass'; biquad.frequency.value=650; }
+    if (fx==='crush'){ shaper.curve=makeDriveCurve(18); }
+  });
+});
+
+/* ---------- visualizer ---------- */
+function drawVisualizer(ctx, w, h, an, color){
+  ctx.fillStyle = '#26282b'; ctx.fillRect(0,0,w,h);
+  if (!an) return;
+  const data = new Uint8Array(an.frequencyBinCount);
+  an.getByteFrequencyData(data);
+  const bars = 96, step = Math.floor(data.length/bars), bw = w/bars;
+  for (let i=0;i<bars;i++){
+    const v = data[i*step]/255;
+    const bh = v*h*0.85;
+    ctx.fillStyle = i%2 ? color : '#5cc2ec';
+    ctx.globalAlpha = 0.35 + v*0.65;
+    ctx.fillRect(i*bw+1, h-bh, bw-2, bh);
+  }
+  ctx.globalAlpha = 1;
+}
+
+/* ---------- MIDI-style beat sequencer ---------- */
+let beatTimer = null;
+const beats = {
+  boom:{ bpm:90,  kick:[0,4,7,10], snare:[4,12], hat:[0,2,4,6,8,10,12,14] },
+  four:{ bpm:120, kick:[0,4,8,12], snare:[4,12], hat:[2,6,10,14] },
+  trap:{ bpm:140, kick:[0,6,10],  snare:[8],    hat:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15] },
+};
+document.querySelectorAll('#midiFx .chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('#midiFx .chip').forEach(c => c.setAttribute('aria-pressed','false'));
+    chip.setAttribute('aria-pressed','true');
+    if (!audioCtx) setupAudioGraph();
+    if (audioCtx.state==='suspended') audioCtx.resume();
+    stopBeat();
+    const b = beats[chip.dataset.beat];
+    if (b) startBeat(b);
+  });
+});
+function startBeat(b){
+  let step = 0;
+  const stepMs = (60000/b.bpm)/4;
+  beatTimer = setInterval(() => {
+    if (b.kick.includes(step)) drum('kick');
+    if (b.snare.includes(step)) drum('snare');
+    if (b.hat.includes(step)) drum('hat');
+    step = (step+1)%16;
+  }, stepMs);
+}
+function stopBeat(){ if (beatTimer){ clearInterval(beatTimer); beatTimer=null; } }
+function drum(type){
+  const t = audioCtx.currentTime;
+  if (type==='kick'){
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.frequency.setValueAtTime(150,t); o.frequency.exponentialRampToValueAtTime(45,t+0.12);
+    g.gain.setValueAtTime(0.9,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.25);
+    o.connect(g); g.connect(analyser); o.start(t); o.stop(t+0.26);
+  } else if (type==='snare'){
+    const buf = audioCtx.createBuffer(1, 4410, 44100), d = buf.getChannelData(0);
+    for (let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2);
+    const s = audioCtx.createBufferSource(); s.buffer=buf;
+    const g = audioCtx.createGain(); g.gain.value=0.5;
+    const f = audioCtx.createBiquadFilter(); f.type='highpass'; f.frequency.value=1400;
+    s.connect(f); f.connect(g); g.connect(analyser); s.start(t);
+  } else {
+    const buf = audioCtx.createBuffer(1, 1300, 44100), d = buf.getChannelData(0);
+    for (let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,4);
+    const s = audioCtx.createBufferSource(); s.buffer=buf;
+    const g = audioCtx.createGain(); g.gain.value=0.18;
+    const f = audioCtx.createBiquadFilter(); f.type='highpass'; f.frequency.value=7000;
+    s.connect(f); f.connect(g); g.connect(analyser); s.start(t);
+  }
+}
+
+/* ---------- playlist (local files only) ---------- */
+const playerEl = new Audio();
+playerEl.crossOrigin = 'anonymous';
+let tracks = [], current = -1, playing = false;
+
+const dz = $('dropzone');
+['dragover','dragenter'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('dragover'); }));
+['dragleave','drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('dragover'); }));
+dz.addEventListener('drop', e => addFiles(e.dataTransfer.files));
+$('fileInput').addEventListener('change', e => addFiles(e.target.files));
+
+function addFiles(list){
+  for (const f of list){
+    if (!f.type.startsWith('audio')) continue;
+    tracks.push({ name:f.name.replace(/\.[^.]+$/,''), url:URL.createObjectURL(f) });
+  }
+  renderTracks();
+  if (current === -1 && tracks.length) selectTrack(0, false);
+}
+function renderTracks(){
+  const ul = $('trackList'); ul.innerHTML = '';
+  tracks.forEach((t,i) => {
+    const li = document.createElement('li');
+    if (i===current) li.classList.add('playing');
+    li.innerHTML = `<span class="t-name">${(i+1).toString().padStart(2,'0')}. ${t.name}</span>`;
+    const up = document.createElement('button'); up.className='t-btn'; up.textContent='↑'; up.title='Move up';
+    const down = document.createElement('button'); down.className='t-btn'; down.textContent='↓'; down.title='Move down';
+    const del = document.createElement('button'); del.className='t-btn'; del.textContent='✕'; del.title='Remove';
+    up.onclick = () => { if(i>0){ [tracks[i-1],tracks[i]]=[tracks[i],tracks[i-1]]; if(current===i)current--; else if(current===i-1)current++; renderTracks(); } };
+    down.onclick = () => { if(i<tracks.length-1){ [tracks[i+1],tracks[i]]=[tracks[i],tracks[i+1]]; if(current===i)current++; else if(current===i+1)current--; renderTracks(); } };
+    del.onclick = () => { URL.revokeObjectURL(tracks[i].url); tracks.splice(i,1); if(current>=tracks.length)current=tracks.length-1; renderTracks(); };
+    li.append(up,down,del);
+    li.querySelector('.t-name').onclick = () => selectTrack(i, true);
+    ul.appendChild(li);
+  });
+}
+function selectTrack(i, autoplay){
+  current = i;
+  playerEl.src = tracks[i].url;
+  renderTracks();
+  if (autoplay) play();
+}
+function play(){
+  if (current===-1) return;
+  if (!audioCtx) setupAudioGraph();
+  if (audioCtx.state==='suspended') audioCtx.resume();
+  playerEl.play(); playing = true; $('playBtn').textContent='⏸';
+}
+function pause(){ playerEl.pause(); playing=false; $('playBtn').textContent='▶'; }
+$('playBtn').addEventListener('click', () => playing ? pause() : play());
+$('prevBtn').addEventListener('click', () => { if(current>0) selectTrack(current-1,true); });
+$('nextBtn').addEventListener('click', () => { if(current<tracks.length-1) selectTrack(current+1,true); });
+playerEl.addEventListener('ended', () => { if(current<tracks.length-1) selectTrack(current+1,true); else pause(); });
+$('volSlider').addEventListener('input', e => playerEl.volume = e.target.value);
+playerEl.volume = 0.8;
+
+/* ---------- chat ---------- */
+function addMsg(text, who){
+  const div = document.createElement('div');
+  div.className = 'msg ' + who;
+  div.innerHTML = `<span class="who">${who==='you'?'You':'Them'}</span>${text.replace(/</g,'&lt;')}`;
+  $('chatLog').appendChild(div);
+  $('chatLog').scrollTop = $('chatLog').scrollHeight;
+}
+function sendChat(){
+  const v = $('chatInput').value.trim();
+  if (!v) return;
+  addMsg(v, 'you');
+  $('chatInput').value='';
+  // DEMO: simulated partner reply. Replace with dataChannel.send(v) once connected.
+  if (partner) setTimeout(() => addMsg(demoReply(), 'them'), 900 + Math.random()*1200);
+}
+$('chatSend').addEventListener('click', sendChat);
+$('chatInput').addEventListener('keydown', e => { if(e.key==='Enter') sendChat(); });
+
+/* ---------- DEMO partner matching (replace with real signaling) ---------- */
+let partner = null, themAnim = null;
+const demoNames = ['Dave123','JazzCat_88','LoFiLena','BeatSmithUK','Marta_Keys','SynthGoblin','TrumpetTom'];
+const demoLines = ['Hey man!','Any requests?','Nice groove 🔥','Try a slower tempo?','That effect is wild','One more take?'];
+function demoReply(){ return demoLines[Math.floor(Math.random()*demoLines.length)]; }
+
+$('shuffleBtn').addEventListener('click', async () => {
+  if (!localStream) await initMedia();
+  if (audioCtx && audioCtx.state==='suspended') audioCtx.resume();
+  $('themStatus').innerHTML = '<div>Searching ' + $('genreSel').selectedOptions[0].text.replace('Genre: ','') + '…</div>';
+  $('themStatus').classList.remove('hidden');
+  $('chatLog').innerHTML = '';
+  setTimeout(() => {
+    partner = {
+      name: demoNames[Math.floor(Math.random()*demoNames.length)],
+      likes: Math.floor(Math.random()*900)+1
+    };
+    $('pmName').textContent = partner.name;
+    $('pmLikes').textContent = 'Likes: ' + partner.likes;
+    $('themStatus').classList.add('hidden');
+    startThemDemo();
+    addMsg('Hi', 'them');
+    setTimeout(() => addMsg('Hey man! Any requests?', 'them'), 1200);
+  }, 1100 + Math.random()*900);
+});
+
+/* demo "them" feed = animated visualizer so the panel feels alive */
+const themCanvas = $('themCanvas'), tc = themCanvas.getContext('2d');
+let tPhase = 0;
+function startThemDemo(){
+  if (themAnim) cancelAnimationFrame(themAnim);
+  (function loop(){
+    const w = themCanvas.width, h = themCanvas.height;
+    tc.fillStyle = '#26282b'; tc.fillRect(0,0,w,h);
+    const bars = 96, bw = w/bars;
+    for (let i=0;i<bars;i++){
+      const v = Math.abs(Math.sin(tPhase*0.05 + i*0.35)) * Math.abs(Math.sin(tPhase*0.013+i*0.05));
+      const bh = v*h*0.8;
+      tc.fillStyle = i%2 ? '#2ea3d6' : '#1c7ba3';
+      tc.globalAlpha = 0.3 + v*0.7;
+      tc.fillRect(i*bw+1, h-bh, bw-2, bh);
+    }
+    tc.globalAlpha = 1;
+    tPhase++;
+    themAnim = requestAnimationFrame(loop);
+  })();
+}
+
+/* ---------- stub buttons ---------- */
+$('likeBtn').addEventListener('click', () => { if(partner){ partner.likes++; $('pmLikes').textContent='Likes: '+partner.likes; } });
+$('friendBtn').addEventListener('click', () => partner && addMsg('(Friend request sent to '+partner.name+' — needs accounts backend)', 'you'));
+$('msgBtn').addEventListener('click', () => $('chatInput').focus());
+$('reportBtn').addEventListener('click', () => partner && alert('Reported. (Auto-ban after X reports requires the backend.)'));
+$('updatesBtn').addEventListener('click', () => alert('Notifications land here once accounts are live.'));
+
+/* ---------- start render loop ---------- */
+renderYou();
+
+/* =====================================================================
+   SIGNALING — where the real backend plugs in
+   ---------------------------------------------------------------------
+   1. Run a WebSocket signaling server (Node + ws, or Firebase RTDB).
+   2. On Start/Shuffle: ws.send({join: genre}) -> server pairs two waiting
+      users and relays SDP offers/answers + ICE candidates between them.
+   3. const pc = new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});
+      localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+      pc.ontrack = e => { attach e.streams[0] to the Them panel };
+      const dc = pc.createDataChannel('chat'); dc.onmessage = e => addMsg(e.data,'them');
+   4. GitHub Pages can host THIS file; the signaling server needs a host
+      that supports WebSockets (Render, Railway, Fly.io, Google App Engine).
+   ===================================================================== */
+</script>
+</body>
+</html>

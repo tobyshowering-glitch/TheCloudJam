@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TheCloudJam — music collaboration with anyone</title>
+<meta name="description" content="TheCloudJam pairs you with a random musician anywhere in the world and lets you jam together live, in the cloud.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Fredoka:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f5f7f9;
+    --surface:#ffffff;
+    --ink:#2c2e31;
+    --ink-dim:#666a6f;
+    --blue:#2ea3d6;
+    --blue-light:#5cc2ec;
+    --blue-deep:#1c7ba3;
+    --charcoal:#333333;
+    --charcoal-soft:#3d3f42;
+    --line: rgba(44,46,49,0.12);
+    --radius: 14px;
+    --display: 'Fraunces', serif;
+    --logo-font: 'Fredoka', sans-serif;
+    --body: 'Space Grotesk', sans-serif;
+    --mono: 'Space Mono', monospace;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    *{animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important;}
+  }
+
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--body);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  a{color:inherit;}
+  img{max-width:100%;display:block;}
+
+  :focus-visible{
+    outline:2px solid var(--blue);
+    outline-offset:3px;
+    border-radius:4px;
+  }
+
+  .wrap{
+    max-width:1180px;
+    margin:0 auto;
+    padding:0 28px;
+  }
+
+  /* ---------- Ambient cloud background ---------- */
+  .cloud-field{
+    position:fixed;
+    inset:0;
+    z-index:-1;
+    overflow:hidden;
+    background:
+      radial-gradient(ellipse 60% 40% at 15% 8%, rgba(46,163,214,0.10), transparent 60%),
+      radial-gradient(ellipse 55% 45% at 88% 18%, rgba(92,194,236,0.10), transparent 60%),
+      radial-gradient(ellipse 70% 60% at 50% 100%, rgba(46,163,214,0.06), transparent 70%),
+      var(--bg);
+  }
+  .drift{
+    position:absolute;
+    border-radius:50%;
+    filter:blur(80px);
+    opacity:0.5;
+    animation: drift 34s ease-in-out infinite;
+  }
+  .drift.a{ width:420px; height:420px; background:rgba(46,163,214,0.16); top:-8%; left:-6%; animation-delay:0s;}
+  .drift.b{ width:360px; height:360px; background:rgba(92,194,236,0.16); top:40%; right:-8%; animation-delay:-10s;}
+  .drift.c{ width:300px; height:300px; background:rgba(51,51,51,0.05); bottom:-10%; left:30%; animation-delay:-20s;}
+  @keyframes drift{
+    0%,100%{ transform:translate(0,0) scale(1); }
+    50%{ transform:translate(30px,-24px) scale(1.08); }
+  }
+
+  .app-banner{
+    display:block;
+    text-align:center;
+    background:var(--blue);
+    color:#fff;
+    font-family:var(--body);
+    font-weight:600;
+    font-size:0.92rem;
+    padding:12px 16px;
+    text-decoration:none;
+    transition:background 0.2s;
+  }
+  .app-banner:hover{ background:var(--blue-deep); }
+  .app-banner strong{ font-weight:700; }
+
+  /* ---------- Nav ---------- */
+  header.site{
+    position:sticky;
+    top:0;
+    z-index:50;
+    backdrop-filter: blur(10px);
+    background:rgba(245,247,249,0.78);
+    border-bottom:1px solid var(--line);
+  }
+  nav{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:18px 0;
+  }
+  .logo{
+    font-family:var(--logo-font);
+    font-weight:600;
+    font-size:1.35rem;
+    letter-spacing:0;
+    text-decoration:none;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    color:var(--ink-dim);
+  }
+  .logo strong{ color:var(--blue); font-weight:700; }
+  .logo b{ color:var(--charcoal); font-weight:700; }
+  .logo sup{
+    font-family:var(--body);
+    font-weight:600;
+    font-size:0.6rem;
+    color:var(--ink-dim);
+    margin-left:1px;
+  }
+  .logo-mark{ flex-shrink:0; display:block; }
+  .nav-links{
+    display:flex;
+    gap:32px;
+    list-style:none;
+    margin:0;padding:0;
+    font-size:0.95rem;
+    color:var(--ink-dim);
+  }
+  .nav-links a{ text-decoration:none; transition:color 0.2s; }
+  .nav-links a:hover{ color:var(--blue); }
+  .nav-cta{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    background:var(--blue);
+    color:#fff;
+    font-weight:600;
+    font-size:0.92rem;
+    padding:10px 18px;
+    border-radius:999px;
+    text-decoration:none;
+    transition:transform 0.2s, background 0.2s;
+  }
+  .nav-cta:hover{ transform:translateY(-1px); background:var(--blue-deep); }
+  .nav-mobile-toggle{
+    display:none;
+    background:none;border:1px solid var(--line);
+    color:var(--ink);
+    border-radius:8px;
+    width:40px;height:40px;
+    font-size:1.1rem;
+    cursor:pointer;
+  }
+
+  @media (max-width: 780px){
+    .nav-links{
+      position:fixed;
+      inset:64px 16px auto 16px;
+      background:var(--surface);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      flex-direction:column;
+      padding:20px;
+      gap:16px;
+      box-shadow:0 12px 32px rgba(44,46,49,0.14);
+      transform-origin:top;
+      transform:scaleY(0);
+      opacity:0;
+      pointer-events:none;
+      transition:transform 0.25s ease, opacity 0.25s ease;
+    }
+    .nav-links.open{ transform:scaleY(1); opacity:1; pointer-events:auto; }
+    .nav-mobile-toggle{ display:block; }
+    .nav-cta.waitlist-cta{ display:none; }
+  }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    padding:96px 0 70px;
+    display:grid;
+    grid-template-columns:1.05fr 0.95fr;
+    gap:56px;
+    align-items:center;
+  }
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:0.78rem;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--blue-deep);
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:22px;
+  }
+  .eyebrow::before{
+    content:"";
+    width:7px;height:7px;
+    border-radius:50%;
+    background:var(--blue);
+    box-shadow:0 0 0 4px rgba(46,163,214,0.18);
+  }
+  h1{
+    font-family:var(--display);
+    font-weight:500;
+    font-size:clamp(2.6rem, 5vw, 4rem);
+    line-height:1.04;
+    margin:0 0 24px;
+    letter-spacing:-0.01em;
+    color:var(--charcoal);
+  }
+  h1 em{
+    font-style:italic;
+    font-weight:500;
+    background:linear-gradient(100deg, var(--blue-deep), var(--blue-light));
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  .hero p.lede{
+    font-size:1.12rem;
+    color:var(--ink-dim);
+    max-width:46ch;
+    margin:0 0 34px;
+  }
+  .hero-ctas{ display:flex; gap:14px; flex-wrap:wrap; margin-bottom:36px; }
+  .btn{
+    font-family:var(--body);
+    font-weight:600;
+    font-size:0.98rem;
+    padding:14px 26px;
+    border-radius:999px;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    border:1px solid transparent;
+    cursor:pointer;
+    transition:transform 0.2s, background 0.2s, border-color 0.2s, color 0.2s;
+  }
+  .btn-primary{ background:var(--blue); color:#fff; }
+  .btn-primary:hover{ transform:translateY(-1px); background:var(--blue-deep); }
+  .btn-ghost{ border-color:var(--line); color:var(--ink); background:transparent; }
+  .btn-ghost:hover{ border-color:var(--blue); color:var(--blue-deep); }
+
+  .hero-meta{
+    display:flex;
+    gap:28px;
+    font-family:var(--mono);
+    font-size:0.82rem;
+    color:var(--ink-dim);
+  }
+  .hero-meta strong{ color:var(--charcoal); display:block; font-size:1.15rem; font-family:var(--body); }
+
+  /* waveform visual */
+  .waveform-card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:26px 24px 22px;
+    position:relative;
+    overflow:hidden;
+    box-shadow:0 20px 48px rgba(44,46,49,0.08);
+  }
+  .waveform-card::before{
+    content:"";
+    position:absolute; inset:0;
+    background:radial-gradient(ellipse 80% 60% at 50% 0%, rgba(46,163,214,0.07), transparent 70%);
+    pointer-events:none;
+  }
+  .wc-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-family:var(--mono);
+    font-size:0.78rem;
+    color:var(--ink-dim);
+    margin-bottom:16px;
+  }
+  .wc-top .live{
+    display:flex; align-items:center; gap:6px;
+    color:var(--blue-deep);
+  }
+  .wc-top .live::before{
+    content:"";
+    width:6px;height:6px;border-radius:50%;
+    background:var(--blue);
+    animation:pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:0.35;} }
+
+  canvas#wave{ width:100%; height:150px; display:block; }
+
+  .wc-tracks{
+    margin-top:18px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .wc-track{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    font-size:0.85rem;
+    color:var(--ink-dim);
+  }
+  .wc-dot{ width:8px;height:8px;border-radius:50%; flex-shrink:0; }
+  .wc-track .name{ color:var(--ink); font-weight:500; width:88px; flex-shrink:0; }
+  .wc-bar{
+    flex:1;
+    height:5px;
+    border-radius:4px;
+    background:var(--line);
+    overflow:hidden;
+  }
+  .wc-bar span{ display:block; height:100%; border-radius:4px; }
+
+  /* ---------- Section shared ---------- */
+  section{ padding:88px 0; border-top:1px solid var(--line); }
+  .section-head{ max-width:640px; margin-bottom:52px; }
+  .section-head .eyebrow{ margin-bottom:14px; }
+  h2{
+    font-family:var(--display);
+    font-weight:500;
+    font-size:clamp(1.9rem, 3.2vw, 2.6rem);
+    margin:0 0 14px;
+    letter-spacing:-0.01em;
+    color:var(--charcoal);
+  }
+  .section-head p{ color:var(--ink-dim); font-size:1.05rem; margin:0; }
+
+  /* ---------- How it works ---------- */
+  .steps{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .step{
+    background:var(--surface);
+    padding:34px 28px 30px;
+  }
+  .step .num{
+    font-family:var(--mono);
+    font-size:0.85rem;
+    color:var(--blue-deep);
+    display:block;
+    margin-bottom:20px;
+  }
+  .step h3{
+    font-family:var(--body);
+    font-size:1.15rem;
+    margin:0 0 10px;
+    font-weight:600;
+    color:var(--charcoal);
+  }
+  .step p{ color:var(--ink-dim); font-size:0.95rem; margin:0; }
+
+  @media (max-width:780px){
+    .steps{ grid-template-columns:1fr; }
+  }
+
+  /* ---------- Jams grid ---------- */
+  .jam-grid{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:20px;
+  }
+  .jam-card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:22px;
+    transition:border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+  }
+  .jam-card:hover{ border-color:var(--blue); transform:translateY(-3px); box-shadow:0 16px 32px rgba(44,46,49,0.08); }
+  .jam-card-top{
+    display:flex; justify-content:space-between; align-items:flex-start;
+    margin-bottom:16px;
+  }
+  .jam-title{ font-family:var(--body); font-weight:600; font-size:1.05rem; margin:0 0 4px; color:var(--charcoal); }
+  .jam-sub{ color:var(--ink-dim); font-size:0.85rem; }
+  .play-btn{
+    width:38px; height:38px; border-radius:50%;
+    background:var(--blue);
+    border:none;
+    color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+    cursor:pointer;
+    font-size:0.8rem;
+    transition:background 0.2s;
+  }
+  .play-btn:hover{ background:var(--blue-deep); }
+  .mini-wave{
+    display:flex; align-items:flex-end; gap:2px;
+    height:36px;
+    margin:14px 0;
+  }
+  .mini-wave i{
+    flex:1;
+    background:var(--blue);
+    opacity:0.55;
+    border-radius:2px;
+    display:block;
+  }
+  .jam-tags{
+    display:flex; gap:8px; flex-wrap:wrap;
+    font-family:var(--mono);
+    font-size:0.72rem;
+    color:var(--ink-dim);
+    margin-top:12px;
+  }
+  .jam-tags span{
+    border:1px solid var(--line);
+    padding:4px 9px;
+    border-radius:999px;
+  }
+
+  @media (max-width:900px){
+    .jam-grid{ grid-template-columns:repeat(2,1fr); }
+  }
+  @media (max-width:600px){
+    .jam-grid{ grid-template-columns:1fr; }
+  }
+
+  /* ---------- Features ---------- */
+  .features{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:20px;
+  }
+  .feature{
+    padding:26px 22px;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    background:var(--surface);
+  }
+  .feature .icon{
+    width:36px;height:36px;
+    border-radius:9px;
+    background:rgba(46,163,214,0.12);
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom:18px;
+    color:var(--blue-deep);
+    font-family:var(--mono);
+    font-size:0.85rem;
+  }
+  .feature h3{ font-size:1rem; margin:0 0 8px; font-family:var(--body); font-weight:600; color:var(--charcoal); }
+  .feature p{ color:var(--ink-dim); font-size:0.9rem; margin:0; }
+
+  @media (max-width:900px){ .features{ grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:560px){ .features{ grid-template-columns:1fr; } }
+
+  /* ---------- Session log (testimonials) ---------- */
+  .log{
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+    background:var(--surface);
+  }
+  .log-entry{
+    display:grid;
+    grid-template-columns:120px 1fr;
+    gap:24px;
+    padding:26px 28px;
+    border-bottom:1px solid var(--line);
+  }
+  .log-entry:last-child{ border-bottom:none; }
+  .log-time{
+    font-family:var(--mono);
+    font-size:0.78rem;
+    color:var(--blue-deep);
+    padding-top:2px;
+  }
+  .log-quote{ font-size:1.02rem; margin:0 0 10px; color:var(--ink); }
+  .log-who{ font-size:0.85rem; color:var(--ink-dim); font-family:var(--mono); }
+
+  @media (max-width:640px){
+    .log-entry{ grid-template-columns:1fr; gap:8px; }
+  }
+
+  /* ---------- CTA band ---------- */
+  .cta-band{
+    text-align:center;
+    background:linear-gradient(160deg, var(--charcoal), var(--charcoal-soft));
+    border-radius:24px;
+    padding:70px 32px;
+    border:1px solid var(--line);
+  }
+  .cta-band h2{ margin-bottom:16px; color:#fff; }
+  .cta-band p{ color:rgba(255,255,255,0.68); max-width:46ch; margin:0 auto 32px; }
+  .cta-band .btn-primary{ font-size:1.02rem; padding:16px 32px; }
+
+  .waitlist-form{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    flex-wrap:wrap;
+    max-width:460px;
+    margin:0 auto;
+  }
+  .waitlist-form input[type="email"]{
+    flex:1;
+    min-width:220px;
+    background:rgba(255,255,255,0.08);
+    border:1px solid rgba(255,255,255,0.22);
+    color:#fff;
+    font-family:var(--body);
+    font-size:0.98rem;
+    padding:14px 18px;
+    border-radius:999px;
+  }
+  .waitlist-form input[type="email"]::placeholder{ color:rgba(255,255,255,0.5); }
+  .waitlist-form input[type="email"]:focus-visible{
+    outline:2px solid var(--blue-light);
+    outline-offset:2px;
+  }
+  .waitlist-form button{ flex-shrink:0; white-space:nowrap; }
+  .waitlist-note{
+    min-height:1.2em;
+    margin:16px 0 0;
+    font-family:var(--mono);
+    font-size:0.82rem;
+    color:var(--blue-light);
+  }
+  .waitlist-form-hero{
+    justify-content:flex-start;
+    margin:0;
+    max-width:480px;
+  }
+  .waitlist-form-hero input[type="email"]{
+    background:var(--surface);
+    border:1px solid var(--line);
+    color:var(--ink);
+  }
+  .waitlist-form-hero input[type="email"]::placeholder{ color:var(--ink-dim); }
+  .hero .waitlist-note{
+    text-align:left;
+    margin:0 0 28px;
+    color:var(--blue-deep);
+  }
+  .visually-hidden{
+    position:absolute;
+    width:1px;height:1px;
+    overflow:hidden;
+    clip:rect(0 0 0 0);
+    white-space:nowrap;
+  }
+
+  /* ---------- Footer ---------- */
+  footer{
+    border-top:1px solid var(--line);
+    padding:44px 0 36px;
+  }
+  .footer-row{
+    display:flex; justify-content:space-between; align-items:center;
+    flex-wrap:wrap; gap:20px;
+  }
+  .footer-links{
+    display:flex; gap:24px; list-style:none; padding:0; margin:0;
+    font-size:0.88rem; color:var(--ink-dim);
+  }
+  .footer-links a{ text-decoration:none; }
+  .footer-links a:hover{ color:var(--blue-deep); }
+  .footer-note{ font-family:var(--mono); font-size:0.78rem; color:var(--ink-dim); margin-top:20px; }
+
+  /* reveal on scroll */
+  .reveal{ opacity:0; transform:translateY(18px); transition:opacity 0.6s ease, transform 0.6s ease; }
+  .reveal.in{ opacity:1; transform:translateY(0); }
+
+  @media (max-width:900px){
+    .hero{ grid-template-columns:1fr; padding-top:60px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cloud-field" aria-hidden="true">
+  <div class="drift a"></div>
+  <div class="drift b"></div>
+  <div class="drift c"></div>
+</div>
+
+<a href="/app.html" class="app-banner">
+  🎛 <strong>The app is live</strong> — tap here to jam right now →
+</a>
+
+<header class="site">
+  <div class="wrap">
+    <nav>
+      <a href="#top" class="logo">
+        <svg class="logo-mark" width="42" height="18" viewBox="0 0 120 52" aria-hidden="true">
+          <circle cx="36" cy="32" r="13" fill="#2ea3d6"/>
+          <circle cx="84" cy="32" r="13" fill="#2ea3d6"/>
+          <rect x="24" y="26" width="72" height="20" rx="9" fill="#2ea3d6"/>
+          <circle cx="60" cy="22" r="20" fill="#2ea3d6"/>
+          <circle cx="60" cy="28" r="20" fill="#fff"/>
+          <circle cx="60" cy="28" r="13" fill="#2ea3d6"/>
+          <circle cx="60" cy="28" r="6" fill="#fff"/>
+          <circle cx="60" cy="28" r="4" fill="#2ea3d6"/>
+          <circle cx="58.6" cy="26.6" r="1.3" fill="#fff"/>
+          <path d="M18,18 q-8,10 0,20" stroke="#2ea3d6" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <path d="M10,14 q-10,14 0,28" stroke="#2ea3d6" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <path d="M102,18 q8,10 0,20" stroke="#2ea3d6" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <path d="M110,14 q10,14 0,28" stroke="#2ea3d6" stroke-width="3" fill="none" stroke-linecap="round"/>
+        </svg>
+        <span><b>The</b><strong>Cloud</strong><b>Jam</b></span><sup>™</sup>
+      </a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#how">How it works</a></li>
+        <li><a href="#jams">Live jams</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#stories">Stories</a></li>
+      </ul>
+      <a href="/app.html" class="nav-cta" style="background:var(--charcoal);">🎛 Try the app</a>
+      <a href="#start" class="nav-cta waitlist-cta">Join the waiting list</a>
+      <button class="nav-mobile-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">☰</button>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- HERO -->
+  <div class="wrap">
+    <section class="hero" style="border-top:none; padding-bottom:70px;">
+      <div>
+        <p class="eyebrow">4,200 strangers jamming right now</p>
+        <h1>Music collaboration <em>with anyone.</em></h1>
+        <p class="lede">Plug in an instrument, hit start, and get paired with a random musician somewhere in the world. No band, no booking, no idea what you'll get — just press play and see who's on the other end.</p>
+        <div class="hero-ctas">
+          <form class="waitlist-form waitlist-form-hero" id="waitlistFormHero">
+            <label for="waitlistEmailHero" class="visually-hidden">Email address</label>
+            <input type="email" id="waitlistEmailHero" name="email" placeholder="you@email.com" required autocomplete="email">
+            <button type="submit" class="btn btn-primary">Join the waiting list</button>
+          </form>
+        </div>
+        <p class="waitlist-note" id="waitlistNoteHero" role="status" aria-live="polite"></p>
+        <div class="hero-ctas" style="margin-top:6px;">
+          <a href="/app.html" class="btn btn-ghost">🎛 Try the app — jam now</a>
+        </div>
+        <div class="hero-meta">
+          <div><strong>0</strong>profiles to browse</div>
+          <div><strong>19ms</strong>average sync latency</div>
+          <div><strong>&lt;10s</strong>average match time</div>
+        </div>
+      </div>
+
+      <div class="waveform-card reveal">
+        <div class="wc-top">
+          <span>PAIRED WITH · stranger #48213</span>
+          <span class="live">live now</span>
+        </div>
+        <canvas id="wave" width="440" height="150"></canvas>
+        <div class="wc-tracks">
+          <div class="wc-track">
+            <span class="wc-dot" style="background:var(--blue);"></span>
+            <span class="name">You</span>
+            <span class="wc-bar"><span style="width:88%; background:var(--blue);"></span></span>
+          </div>
+          <div class="wc-track">
+            <span class="wc-dot" style="background:var(--blue-deep);"></span>
+            <span class="name">Them</span>
+            <span class="wc-bar"><span style="width:64%; background:var(--blue-deep);"></span></span>
+          </div>
+          <div class="wc-track">
+            <span class="wc-dot" style="background:var(--charcoal);"></span>
+            <span class="name">Next up</span>
+            <span class="wc-bar"><span style="width:20%; background:var(--charcoal);"></span></span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <section id="how">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <p class="eyebrow">The signal path</p>
+        <h2>From nothing, to a track, in three passes</h2>
+        <p>Every jam moves through the same chain — the order is the point, not decoration.</p>
+      </div>
+      <div class="steps">
+        <div class="step reveal">
+          <span class="num">01 / plug in</span>
+          <h3>Pick up an instrument</h3>
+          <p>Grab a mic, a guitar, a synth — whatever's in reach. Tell us the vibe you're in the mood for, or leave it to chance.</p>
+        </div>
+        <div class="step reveal">
+          <span class="num">02 / match</span>
+          <h3>Get paired, instantly</h3>
+          <p>We drop you into a live jam with a random musician somewhere else in the world. No profile to read, no name yet — just their sound.</p>
+        </div>
+        <div class="step reveal">
+          <span class="num">03 / play</span>
+          <h3>See where it goes</h3>
+          <p>Jam for a minute or an hour. Skip to the next stranger any time, or stick around and turn it into a real track together.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LIVE JAMS -->
+  <section id="jams">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <p class="eyebrow">Happening right now</p>
+        <h2>Strangers, mid-jam</h2>
+        <p>A snapshot of random pairings playing together at this exact moment.</p>
+      </div>
+      <div class="jam-grid">
+
+        <div class="jam-card reveal">
+          <div class="jam-card-top">
+            <div>
+              <p class="jam-title">Stranger #48213 + #19004</p>
+              <p class="jam-sub">Matched 6 min ago · Neo-soul</p>
+            </div>
+            <button class="play-btn" aria-label="Listen in on this jam">▶</button>
+          </div>
+          <div class="mini-wave" aria-hidden="true"></div>
+          <div class="jam-tags"><span>94 BPM</span><span>A minor</span><span>Still going</span></div>
+        </div>
+
+        <div class="jam-card reveal">
+          <div class="jam-card-top">
+            <div>
+              <p class="jam-title">Stranger #30871 + #55192</p>
+              <p class="jam-sub">Matched 1 min ago · Post-punk</p>
+            </div>
+            <button class="play-btn" aria-label="Listen in on this jam">▶</button>
+          </div>
+          <div class="mini-wave" aria-hidden="true"></div>
+          <div class="jam-tags"><span>146 BPM</span><span>E minor</span><span>Just started</span></div>
+        </div>
+
+        <div class="jam-card reveal">
+          <div class="jam-card-top">
+            <div>
+              <p class="jam-title">Stranger #02744 + #61350</p>
+              <p class="jam-sub">Matched 14 min ago · Bedroom pop</p>
+            </div>
+            <button class="play-btn" aria-label="Listen in on this jam">▶</button>
+          </div>
+          <div class="mini-wave" aria-hidden="true"></div>
+          <div class="jam-tags"><span>110 BPM</span><span>C major</span><span>Still going</span></div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <p class="eyebrow">Built for the take, not the meeting</p>
+        <h2>Everything a session needs</h2>
+        <p>The tools stay out of the way so the playing doesn't have to stop.</p>
+      </div>
+      <div class="features">
+        <div class="feature reveal">
+          <div class="icon">~19ms</div>
+          <h3>Low-latency sync</h3>
+          <p>Play against a live take without the lag that kills the pocket.</p>
+        </div>
+        <div class="feature reveal">
+          <div class="icon">↺</div>
+          <h3>Full version history</h3>
+          <p>Every take is saved. Revert a mix, compare an old bassline, never lose a bounce.</p>
+        </div>
+        <div class="feature reveal">
+          <div class="icon">♪</div>
+          <h3>Auto key & tempo</h3>
+          <p>New stems snap to the session's key and grid the moment they land.</p>
+        </div>
+        <div class="feature reveal">
+          <div class="icon">⇄</div>
+          <h3>Stem export</h3>
+          <p>Pull individual tracks or a full stem pack into your own DAW, any time.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STORIES / SESSION LOG -->
+  <section id="stories">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <p class="eyebrow">From the session log</p>
+        <h2>What players are saying</h2>
+        <p>Notes pulled straight from live sessions this month.</p>
+      </div>
+      <div class="log reveal">
+        <div class="log-entry">
+          <span class="log-time">02:14 AM</span>
+          <div>
+            <p class="log-quote">Got matched with a trumpet player in Lagos at 2am my time. Neither of us said a word — we just played for twenty minutes straight.</p>
+            <p class="log-who">— Priya R., matched at random</p>
+          </div>
+        </div>
+        <div class="log-entry">
+          <span class="log-time">11:47 PM</span>
+          <div>
+            <p class="log-quote">Skipped through four strangers before I found one who could actually play. Fifth one's now in my band.</p>
+            <p class="log-who">— Dev O., matched at random</p>
+          </div>
+        </div>
+        <div class="log-entry">
+          <span class="log-time">06:03 PM</span>
+          <div>
+            <p class="log-quote">Version history saved a bassline my jam partner deleted by accident. Neither of us even knew the other's name yet.</p>
+            <p class="log-who">— Mika T., matched at random</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section id="start">
+    <div class="wrap">
+      <div class="cta-band reveal">
+        <h2>Your next jam partner is a stranger, waiting.</h2>
+        <p>We're opening up spots gradually to keep matches fast. Join the waiting list and we'll email you the second a spot opens.</p>
+        <form class="waitlist-form" id="waitlistForm">
+          <label for="waitlistEmail" class="visually-hidden">Email address</label>
+          <input type="email" id="waitlistEmail" name="email" placeholder="you@email.com" required autocomplete="email">
+          <button type="submit" class="btn btn-primary">Join the waiting list</button>
+        </form>
+        <p class="waitlist-note" id="waitlistNote" role="status" aria-live="polite"></p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-row">
+      <a href="#top" class="logo">
+        <svg class="logo-mark" width="36" height="16" viewBox="0 0 120 52" aria-hidden="true">
+          <circle cx="36" cy="32" r="13" fill="#2ea3d6"/>
+          <circle cx="84" cy="32" r="13" fill="#2ea3d6"/>
+          <rect x="24" y="26" width="72" height="20" rx="9" fill="#2ea3d6"/>
+          <circle cx="60" cy="22" r="20" fill="#2ea3d6"/>
+          <circle cx="60" cy="28" r="20" fill="#fff"/>
+          <circle cx="60" cy="28" r="13" fill="#2ea3d6"/>
+          <circle cx="60" cy="28" r="6" fill="#fff"/>
+          <circle cx="60" cy="28" r="4" fill="#2ea3d6"/>
+          <circle cx="58.6" cy="26.6" r="1.3" fill="#fff"/>
+          <path d="M18,18 q-8,10 0,20" stroke="#2ea3d6" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <path d="M10,14 q-10,14 0,28" stroke="#2ea3d6" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <path d="M102,18 q8,10 0,20" stroke="#2ea3d6" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <path d="M110,14 q10,14 0,28" stroke="#2ea3d6" stroke-width="3" fill="none" stroke-linecap="round"/>
+        </svg>
+        <span><b>The</b><strong>Cloud</strong><b>Jam</b></span><sup>™</sup>
+      </a>
+      <ul class="footer-links">
+        <li><a href="/app.html">Try the app</a></li>
+        <li><a href="#how">How it works</a></li>
+        <li><a href="#jams">Live jams</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#">Privacy</a></li>
+      </ul>
+    </div>
+    <p class="footer-note">TheCloudJam — press play, meet a stranger, make some noise.</p>
+  </div>
+</footer>
+
+<script>
+  // ── Waitlist form → Formspree ──────────────────────────────────────
+  const FORMSPREE_ID = 'xjybaebn';
+  const FORMSPREE_URL = `https://formspree.io/f/${FORMSPREE_ID}`;
+
+  async function handleWaitlistSubmit(form, note) {
+    const emailInput = form.querySelector('input[type="email"]');
+    const email = emailInput.value.trim();
+    if (!email) return;
+
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalLabel = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Joining…';
+    note.textContent = '';
+
+    if (FORMSPREE_ID === 'YOUR_FORM_ID') {
+      note.textContent = 'Form not connected yet — add your Formspree ID in the code.';
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalLabel;
+      return;
+    }
+
+    try {
+      const res = await fetch(FORMSPREE_URL, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' },
+        body: new FormData(form)
+      });
+      if (res.ok) {
+        note.textContent = `You're on the list — we'll email ${email} when a spot opens.`;
+        form.reset();
+      } else {
+        note.textContent = "Something went wrong — mind trying again?";
+      }
+    } catch (err) {
+      note.textContent = "Couldn't reach the server — check your connection and try again.";
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalLabel;
+    }
+  }
+
+  const waitlistFormHero = document.getElementById('waitlistFormHero');
+  const waitlistNoteHero = document.getElementById('waitlistNoteHero');
+  waitlistFormHero.addEventListener('submit', (e) => {
+    e.preventDefault();
+    handleWaitlistSubmit(waitlistFormHero, waitlistNoteHero);
+  });
+
+  const waitlistForm = document.getElementById('waitlistForm');
+  const waitlistNote = document.getElementById('waitlistNote');
+  waitlistForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    handleWaitlistSubmit(waitlistForm, waitlistNote);
+  });
+
+  const navToggle = document.getElementById('navToggle');
+  const navLinks = document.getElementById('navLinks');
+  navToggle.addEventListener('click', () => {
+    const open = navLinks.classList.toggle('open');
+    navToggle.setAttribute('aria-expanded', open);
+  });
+  navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+    navLinks.classList.remove('open');
+    navToggle.setAttribute('aria-expanded', 'false');
+  }));
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const revealEls = document.querySelectorAll('.reveal');
+  if (reduceMotion) {
+    revealEls.forEach(el => el.classList.add('in'));
+  } else {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+    revealEls.forEach(el => io.observe(el));
+  }
+
+  document.querySelectorAll('.mini-wave').forEach(wave => {
+    for (let i = 0; i < 28; i++) {
+      const bar = document.createElement('i');
+      const h = 15 + Math.random() * 85;
+      bar.style.height = h + '%';
+      wave.appendChild(bar);
+    }
+  });
+
+  const canvas = document.getElementById('wave');
+  const ctx = canvas.getContext('2d');
+  let t = 0;
+
+  function resizeCanvas(){
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  function drawWave(){
+    const w = canvas.getBoundingClientRect().width;
+    const h = canvas.getBoundingClientRect().height;
+    ctx.clearRect(0, 0, w, h);
+
+    const layers = [
+      { color: 'rgba(46,163,214,0.9)', amp: 0.30, freq: 0.028, speed: 0.045, base: 0.5 },
+      { color: 'rgba(28,123,163,0.6)',  amp: 0.20, freq: 0.045, speed: 0.03,  base: 0.55 },
+      { color: 'rgba(51,51,51,0.28)', amp: 0.15, freq: 0.06,  speed: 0.06,  base: 0.6 },
+    ];
+
+    layers.forEach(layer => {
+      ctx.beginPath();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = layer.color;
+      for (let x = 0; x <= w; x += 4) {
+        const y = h * layer.base + Math.sin(x * layer.freq + t * layer.speed) * h * layer.amp * Math.sin(t*0.01 + x*0.002);
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    });
+
+    t += 1;
+  }
+
+  function loop(){
+    drawWave();
+    if (!reduceMotion) requestAnimationFrame(loop);
+  }
+  if (reduceMotion) { drawWave(); } else { loop(); }
+</script>
+
+</body>
+</html>
